@@ -1,0 +1,30 @@
+name: kolyach-dev-test
+services:
+  site:
+    image: nginx:1.29-alpine@sha256:5616878291a2eed594aee8db4dade5878cf7edcb475e59193904b198d9b830de
+    volumes:
+      - ../deploy/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - releases:/srv/kolyach-dev/releases:ro
+      - live:/srv/kolyach-dev/live:ro
+      - shared:/srv/kolyach-dev/shared:ro
+      - assets:/srv/kolyach-dev/assets:ro
+  test:
+    image: node:24-alpine@sha256:116b800c3754b440ee0aa3ed2f20f5bf3d99a554bfd9adeea09ea8017f6e85f5
+    working_dir: /work
+    command: node --test tests/deploy.node.mjs
+    environment:
+      DEPLOY_TEST_ORIGIN: http://site
+    volumes:
+      - ..:/work:ro
+      - releases:/srv/kolyach-dev/releases
+      - live:/srv/kolyach-dev/live
+      - shared:/srv/kolyach-dev/shared
+      - assets:/srv/kolyach-dev/assets
+      - state:/srv/kolyach-dev/.state
+    depends_on: [site]
+volumes:
+  releases:
+  live:
+  shared:
+  assets:
+  state:

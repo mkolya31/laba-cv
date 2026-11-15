@@ -44,6 +44,6 @@ check выполняет ESLint, Prettier, TypeScript, сборку и брау�
 
 ## Публикация
 
-См. [инструкцию Ubuntu/nginx](docs/deployment.md). Контакты задаются через CONTACT_PHONE и CONTACT_TELEGRAM_URL, резюме — через RESUME_URL. PDF, настоящий runtime JSON и окружение не входят в git и артефакты CI. Резюме открывается в новой вкладке.
+Публикация запускается после merge PR в `production` из `develop`, `release/*` или `hotfix/*`, с повторной сборкой и проверками итогового коммита. Для запрета merge из других веток необходимы обязательные checks и защита `production` в GitHub. Статический сайт работает в отдельном nginx-контейнере за существующим Docker-gateway; Node.js 24 на VPS запускает только серверные скрипты. Контейнерные проверки доставки также обязательны в CI. См. [инструкцию Ubuntu/nginx](docs/deployment.md). Контакты задаются через CONTACT_PHONE и CONTACT_TELEGRAM_URL, резюме — через RESUME_URL. PDF, настоящий runtime JSON и окружение не входят в git и артефакты CI. Резюме открывается в новой вкладке.
 
 OpenSpec-изменение build-resume-mvp содержит требования и статус задач. Архивировать после проверки реальной публикации.
