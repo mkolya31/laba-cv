@@ -3,9 +3,10 @@ on:
   pull_request:
     types: [opened, synchronize, reopened, edited, closed]
   push:
-    branches: [main, develop]
+    branches: [main, develop, production]
 permissions:
   contents: read
+  pull-requests: read
 concurrency:
   group: site-${{ github.ref }}
   cancel-in-progress: false
@@ -13,6 +14,7 @@ jobs:
   production-source:
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
       - name: Check production PR source
         shell: bash
         env:
@@ -28,14 +30,27 @@ jobs:
             develop|release/?*|hotfix/?*) ;;
             *) echo '::error::Production accepts PRs only from develop, release/* or hotfix/*'; exit 1 ;;
           esac
+      - name: Verify merged PR for production commit
+        if: github.event_name == 'push' && github.ref == 'refs/heads/production'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          for attempt in 1 2 3 4 5; do
+            if gh api --paginate --slurp "repos/$GITHUB_REPOSITORY/commits/$GITHUB_SHA/pulls?per_page=100" | node scripts/check-production-merge.mjs; then
+              exit 0
+            fi
+            if [ "$attempt" -lt 5 ]; then sleep 3; fi
+          done
+          exit 1
   verify:
     needs: production-source
-    if: github.event.action != 'closed' || (github.event.pull_request.merged == true && github.base_ref == 'production')
+    if: github.event.action != 'closed'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.action == 'closed' && github.event.pull_request.merge_commit_sha || github.sha }}
+          ref: ${{ github.sha }}
       - uses: actions/setup-node@v4
         with:
           node-version-file: .nvmrc
@@ -53,7 +68,7 @@ jobs:
         run: docker compose -f tests/deploy.compose.yaml down --volumes
       - name: Record release identity
         env:
-          RELEASE_SHA: ${{ github.event.action == 'closed' && github.event.pull_request.merge_commit_sha || github.sha }}
+          RELEASE_SHA: ${{ github.sha }}
         run: node --input-type=module -e "import {writeFileSync} from 'node:fs'; writeFileSync('out/release.json', JSON.stringify({sha:process.env.RELEASE_SHA,run:Number(process.env.GITHUB_RUN_NUMBER),attempt:Number(process.env.GITHUB_RUN_ATTEMPT)}));"
       - uses: actions/upload-artifact@v4
         with:
@@ -61,7 +76,7 @@ jobs:
           path: out
   deploy:
     needs: [production-source, verify]
-    if: github.event_name == 'pull_request' && github.event.action == 'closed' && github.event.pull_request.merged == true && github.base_ref == 'production'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/production'
     runs-on: ubuntu-latest
     environment: production
     env:
