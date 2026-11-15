@@ -1,6 +1,6 @@
 export const sourceUrl = 'https://github.com/mkolya31/laba-cv';
 export const phrases = [
-  'Максим Коляченко',
+  'Сделал этот сайт за выходные',
   'лучший разработчик Сбера 2023',
   'люблю вайбкодить',
   'круто презентую идеи',

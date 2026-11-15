@@ -57,7 +57,7 @@ const Home = () => (
       >
         <div className="section-heading">
           <div>
-            <p className="eyebrow">От замысла к результату</p>
+            <p className="eyebrow">02 / От замысла к результату</p>
             <h2 id="cases-title">
               Что я уже <em>сделал.</em>
             </h2>
@@ -100,7 +100,7 @@ const Home = () => (
       <ContactSection />
       <section className="about-site section-wrap" aria-labelledby="site-title">
         <div>
-          <p className="eyebrow">Этот сайт — тоже мой проект</p>
+          <p className="eyebrow">04 / Этот сайт — тоже мой проект</p>
           <h2 id="site-title">
             От идеи
             <br />

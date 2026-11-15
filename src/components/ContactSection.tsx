@@ -1,6 +1,8 @@
 'use client';
 import { useEffect, useState, useSyncExternalStore } from 'react';
 import { parseConfig, type RuntimeConfig } from '../lib/runtime';
+import { sourceUrl } from '../content/profile';
+import Icon from './Icon';
 
 const subscribe = () => () => {};
 const ContactSection = () => {
@@ -18,6 +20,7 @@ const ContactSection = () => {
     status =
       'Резюме и контакты временно недоступны. Попробуйте обновить страницу позже.';
   useEffect(() => {
+    let active = true;
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), 10000);
     fetch('/runtime-config.json', {
@@ -30,10 +33,15 @@ const ContactSection = () => {
         }
         return response.json();
       })
-      .then((data: unknown) => setConfig(parseConfig(data)))
-      .catch(() => setError(true))
+      .then((data: unknown) => {
+        if (active) setConfig(parseConfig(data));
+      })
+      .catch(() => {
+        if (active) setError(true);
+      })
       .finally(() => clearTimeout(timer));
     return () => {
+      active = false;
       controller.abort();
       clearTimeout(timer);
     };
@@ -44,7 +52,7 @@ const ContactSection = () => {
       className="contact section-wrap"
       aria-labelledby="contact-title"
     >
-      <span className="eyebrow">Продолжим знакомство</span>
+      <span className="eyebrow">03 / Продолжим знакомство</span>
       <h2 id="contact-title">
         Давайте поработаем
         <br />
@@ -54,7 +62,7 @@ const ContactSection = () => {
         Изучите{' '}
         {config ? (
           <a href={config.resumeUrl} target="_blank" rel="noopener noreferrer">
-            моё резюме ↗
+            моё резюме <Icon name="pdf" />
           </a>
         ) : (
           <span>моё резюме</span>
@@ -64,16 +72,24 @@ const ContactSection = () => {
       {config && (
         <div className="contact-actions">
           <a className="button primary" href={`tel:${config.phone}`}>
-            ↗ Позвонить мне
+            <Icon name="phone" /> Позвонить мне
           </a>
           <a className="button" href={config.telegramUrl}>
-            Написать в телеге ↗
+            <Icon name="telegram" /> Написать в телеге
           </a>
         </div>
       )}
       <p className="status" role="status">
         {status}
       </p>
+      <a
+        className="text-link source-link"
+        href={sourceUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        Исходный код этого сайта на GitHub ↗
+      </a>
     </section>
   );
 };

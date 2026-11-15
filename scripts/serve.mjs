@@ -20,10 +20,16 @@ createServer(async (req, res) => {
       return;
     }
     const file = extname(path) ? path : resolve(path, 'index.html');
-    const data = await readFile(file);
+    let data;
+    if (new URL(req.url, 'https://local').pathname === '/runtime-config.json') {
+      data = await readFile('.local/runtime-config.json');
+    } else {
+      data = await readFile(file);
+    }
     res
       .writeHead(200, {
         'Content-Type': types[extname(file)] || 'application/octet-stream',
+        'Cache-Control': 'no-store',
       })
       .end(data);
   } catch {

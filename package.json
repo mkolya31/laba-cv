@@ -2,7 +2,7 @@
   "name": "laba-cv",
   "version": "0.1.0",
   "private": true,
-  "description": "Сайт-резюме под конкретную вакансию, разрабатываемый с OpenSpec",
+  "description": "РЎР°Р№С‚-СЂРµР·СЋРјРµ РїРѕРґ РєРѕРЅРєСЂРµС‚РЅСѓСЋ РІР°РєР°РЅСЃРёСЋ, СЂР°Р·СЂР°Р±Р°С‚С‹РІР°РµРјС‹Р№ СЃ OpenSpec",
   "scripts": {
     "openspec": "openspec",
     "spec:list": "openspec list",
@@ -12,12 +12,14 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "dev": "next dev --hostname 127.0.0.1",
-    "build": "next build",
+    "build": "node scripts/build.mjs",
     "typecheck": "tsc --noEmit",
     "test": "playwright test",
     "preview": "node scripts/serve.mjs",
     "check": "npm run lint && npm run format:check && npm run typecheck && npm run test:unit && npm run build && npm test",
-    "test:unit": "node --test tests/runtime.node.mjs"
+    "test:unit": "node --test tests/runtime.node.mjs",
+    "predev": "node scripts/prepare-local.mjs",
+    "prepreview": "node scripts/prepare-local.mjs"
   },
   "devDependencies": {
     "@fission-ai/openspec": "2.0.0",

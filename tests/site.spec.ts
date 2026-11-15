@@ -56,7 +56,7 @@ test('таймер, ручное переключение, задержка и �
   await page.clock.install();
   await page.goto('/');
   const phrase = page.locator('.phrase');
-  await expect(phrase).toHaveText('Максим Коляченко');
+  await expect(phrase).toHaveText('Сделал этот сайт за выходные');
   await page.clock.fastForward(6000);
   await expect(phrase).toHaveText('лучший разработчик Сбера 2023');
   await page.getByRole('button', { name: 'Следующая фраза' }).click();
@@ -75,7 +75,9 @@ test('сокращение движения и адаптивность', async 
   await page.clock.install();
   await page.goto('/');
   await page.clock.fastForward(45000);
-  await expect(page.locator('.phrase')).toHaveText('Максим Коляченко');
+  await expect(page.locator('.phrase')).toHaveText(
+    'Сделал этот сайт за выходные',
+  );
   for (const width of [360, 768, 1440]) {
     await page.setViewportSize({ width, height: 1000 });
     for (let i = 0; i < 5; i++) {

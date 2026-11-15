@@ -601,3 +601,16 @@ h3,
   color: #101116;
   background: linear-gradient(120deg, #f3ab43, #d6764f);
 }
+
+.icon {
+  width: 1.25em;
+  height: 1.25em;
+  vertical-align: -0.23em;
+  flex-shrink: 0;
+}
+.contact-actions .button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
