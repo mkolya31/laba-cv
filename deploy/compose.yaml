@@ -1,0 +1,18 @@
+name: kolyach-dev
+services:
+  site:
+    image: nginx:1.29-alpine@sha256:5616878291a2eed594aee8db4dade5878cf7edcb475e59193904b198d9b830de
+    restart: unless-stopped
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - /srv/kolyach-dev/releases:/srv/kolyach-dev/releases:ro
+      - /srv/kolyach-dev/live:/srv/kolyach-dev/live:ro
+      - /srv/kolyach-dev/shared:/srv/kolyach-dev/shared:ro
+      - /srv/kolyach-dev/assets:/srv/kolyach-dev/assets:ro
+    networks:
+      web:
+        aliases: [kolyach-dev]
+networks:
+  web:
+    external: true
+    name: web

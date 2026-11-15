@@ -1,47 +1,25 @@
-import { readFile, realpath, symlink, rename, rm } from 'node:fs/promises';
-import { resolve, sep } from 'node:path';
-import { parseConfig } from '../src/lib/runtime.ts';
-const activate = async () => {
+import { activate, cleanup, recover } from './releases.mjs';
+
+try {
   if (process.platform !== 'linux') throw new Error('Linux required');
-  const base = await realpath(process.argv[2]);
-  const release = await realpath(resolve(base, 'releases', process.argv[3]));
-  const releases = await realpath(resolve(base, 'releases'));
-  if (!release.startsWith(releases + sep))
-    throw new Error('Invalid release path');
-  await readFile(resolve(release, 'index.html'));
-  await readFile(resolve(release, 'portrait.webp'));
-  const config = parseConfig(
-    JSON.parse(
-      await readFile(resolve(base, 'shared/runtime-config.json'), 'utf8'),
-    ),
-  );
-  if (config.resumeUrl === '/resume.pdf') {
-    const pdf = await readFile(resolve(base, 'shared/resume.pdf'));
-    if (pdf.subarray(0, 5).toString() !== '%PDF-')
-      throw new Error('PDF missing');
-  } else {
-    const response = await fetch(config.resumeUrl, {
-      signal: AbortSignal.timeout(10000),
-    });
-    if (
-      !response.ok ||
-      !response.headers.get('content-type')?.includes('application/pdf')
-    )
-      throw new Error('Resume unavailable');
-    await response.body?.cancel();
-  }
-  const next = resolve(base, `.current-${process.pid}`);
-  try {
-    await symlink(release, next);
-    await rename(next, resolve(base, 'current'));
-  } finally {
-    await rm(next, { force: true });
-  }
-  console.log('Релиз активирован. Постоянные файлы сохранены.');
-};
-activate().catch(() => {
+  const [base, id, mode = 'activate', bootstrapOrigin] = process.argv.slice(2);
+  if (
+    !['activate', 'rollback', 'bootstrap', 'cleanup', 'recover'].includes(mode)
+  )
+    throw new Error('Invalid mode');
+  if (mode !== 'bootstrap' && bootstrapOrigin)
+    throw new Error('Origin override prohibited');
+  const origin =
+    mode === 'bootstrap' ? bootstrapOrigin : 'https://dev.kolyach.me';
+  if (!origin || (mode === 'bootstrap' && new URL(origin).protocol !== 'http:'))
+    throw new Error('Bootstrap requires internal HTTP origin');
+  if (mode === 'cleanup') await cleanup(base);
+  else if (mode === 'recover') await recover(base);
+  else await activate({ base, id, mode, origin });
+  console.log('Релиз проверен и активирован. Постоянные файлы сохранены.');
+} catch {
   console.error(
-    'Релиз не активирован. Проверьте артефакт, runtime-конфигурацию и доступность PDF.',
+    'Деплой не завершён. Проверьте файлы, блокировку и журнал .state. При ошибке возврата требуется администратор; без предшественника отключите только новый virtual host.',
   );
   process.exitCode = 1;
-});
+}
