@@ -1,0 +1,61 @@
+name: Site
+on:
+  pull_request:
+  push:
+    branches: [main]
+permissions:
+  contents: read
+concurrency:
+  group: site-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run check
+      - uses: actions/upload-artifact@v4
+        with:
+          name: site
+          path: out
+  deploy:
+    needs: verify
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment: production
+    env:
+      DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+      DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+      DEPLOY_KEY: ${{ secrets.DEPLOY_KEY }}
+      DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: site
+          path: out
+      - name: Prepare SSH
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$DEPLOY_HOST" && test -n "$DEPLOY_USER" && test -n "$DEPLOY_KEY" && test -n "$DEPLOY_KNOWN_HOSTS"
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          printf '%s\n' "$DEPLOY_KEY" > ~/.ssh/id_ed25519
+          printf '%s\n' "$DEPLOY_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/id_ed25519 ~/.ssh/known_hosts
+      - name: Upload and activate
+        shell: bash
+        run: |
+          set -euo pipefail
+          release="${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}-${GITHUB_SHA}"
+          target="${DEPLOY_USER}@${DEPLOY_HOST}"
+          ssh -o StrictHostKeyChecking=yes "$target" "mkdir -p /srv/kolyach-dev/releases/$release"
+          rsync -az -e 'ssh -o StrictHostKeyChecking=yes' out/ "$target:/srv/kolyach-dev/releases/$release/"
+          ssh -o StrictHostKeyChecking=yes "$target" "node /srv/kolyach-dev/tools/scripts/activate-release.mjs /srv/kolyach-dev $release"

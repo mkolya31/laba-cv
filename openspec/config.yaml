@@ -1,0 +1,47 @@
+schema: spec-driven
+
+context: |
+  Language: Russian
+  All artifacts must be written in Russian.
+  Keep OpenSpec structural headings and SHALL/MUST keywords in English.
+  Project: a simple resume website tailored to one specific vacancy.
+  Delivery budget: 48 hours from the start of development.
+  The vacancy, required technology stack, resume content, site language,
+  and deployment platform have not been provided yet. Clarify these before
+  proposing the initial implementation; do not choose a stack implicitly.
+  Prioritize a small deployable MVP. Propose optional features separately.
+  Use only verified experience and achievements supplied by the user.
+  Never invent qualifications, employment history, metrics, or contacts.
+
+rules:
+  proposal:
+    - State the target vacancy, agreed stack, MVP scope, and explicit non-goals.
+  specs:
+    - Include observable acceptance scenarios for the agreed MVP.
+  design:
+    - Explain how the agreed stack supports delivery within 48 hours.
+  tasks:
+    - Keep implementation tasks small enough to complete in at most two hours each.
+    - Include production build, mobile layout, keyboard navigation, links, and deployment checks.
+
+# Per-artifact rules (optional)
+# Add custom rules for specific artifacts.
+# Example:
+#   rules:
+#     proposal:
+#       - Keep proposals under 500 words
+#       - Always state what is out of scope
+#     tasks:
+#       - Break tasks into chunks of max 2 hours
+
+# Per-operation guidance (optional)
+# Add advisory guidance for how apply and archive work should be conducted.
+# This is separate from artifact rules above.
+# Example:
+#   operations:
+#     apply:
+#       guidance:
+#         - Keep test summaries concise
+#     archive:
+#       guidance:
+#         - Summarize the archive outcome before finishing
