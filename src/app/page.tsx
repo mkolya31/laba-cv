@@ -28,7 +28,6 @@ const Home = () => (
             fetchPriority="high"
           />
           <div className="portrait-caption">
-            <span>Идея → прототип → продукт</span>
             <span>01 / Знакомство</span>
           </div>
         </div>
