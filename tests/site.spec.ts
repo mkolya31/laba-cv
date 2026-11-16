@@ -53,41 +53,63 @@ test('внешний PDF и ошибка конфигурации', async ({ pag
   await expect(page.getByRole('link', { name: 'моё резюме' })).toHaveCount(0);
 });
 test('таймер, ручное переключение, задержка и фокус', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
   await page.clock.install();
   await page.goto('/');
+  await page.clock.pauseAt(new Date(Date.now() + 1000));
+  await page.locator('.switcher').hover();
+  await page.mouse.move(0, 0);
   const phrase = page.locator('.phrase');
   await expect(phrase).toHaveText('Сделал этот сайт за выходные');
-  await page.clock.fastForward(6000);
+  await page.clock.runFor(3999);
+  await expect(phrase).toHaveText('Сделал этот сайт за выходные');
+  await page.clock.runFor(1);
   await expect(phrase).toHaveText('лучший разработчик Сбера 2023');
   await page.getByRole('button', { name: 'Следующая фраза' }).click();
-  await page.clock.fastForward(40000);
+  await page.clock.runFor(40000);
   await expect(phrase).toHaveText('Умею в фронт, бэк и devops');
   await page.getByRole('button', { name: 'Следующая фраза' }).click();
   await page.mouse.move(0, 0);
   await page.locator('h1').click();
-  await page.clock.fastForward(29000);
+  await page.clock.runFor(29999);
   await expect(phrase).toHaveText('люблю вайбкодить');
-  await page.clock.fastForward(1000);
+  await page.clock.runFor(1);
   await expect(phrase).toHaveText('круто презентую идеи');
-  await page.clock.fastForward(6000);
+  await page.clock.runFor(4000);
   await expect(phrase).toHaveText('хочу работать в R&D');
-  await page.clock.fastForward(6000);
+  await page.clock.runFor(4000);
   await expect(phrase).toHaveText('Сделал этот сайт за выходные');
 });
 
 test('новая фраза, её соседи и автоматический переход', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
   await page.clock.install();
   await page.goto('/');
+  await page.clock.pauseAt(new Date(Date.now() + 1000));
+  await page.locator('.switcher').hover();
+  await page.mouse.move(0, 0);
   const phrase = page.locator('.phrase');
   const next = page.getByRole('button', { name: 'Следующая фраза' });
   const previous = page.getByRole('button', { name: 'Предыдущая фраза' });
-  await page.clock.runFor(6500);
+  await page.clock.runFor(4000);
   await expect(phrase).toHaveText('лучший разработчик Сбера 2023');
-  await page.clock.runFor(6500);
+  await page.clock.runFor(4000);
   await expect(phrase).toHaveText('Умею в фронт, бэк и devops');
   await expect(page.locator('.dots > span')).toHaveCount(6);
   await expect(page.locator('.dots > span').nth(2)).toHaveClass('active');
-  await page.clock.runFor(6500);
+  await page.clock.runFor(4000);
+  await expect(phrase).toHaveText('люблю вайбкодить');
+  await page.clock.runFor(4000);
+  await expect(phrase).toHaveText('круто презентую идеи');
+  await page.clock.runFor(4000);
+  await expect(phrase).toHaveText('хочу работать в R&D');
+  await page.clock.runFor(4000);
+  await expect(phrase).toHaveText('Сделал этот сайт за выходные');
+  await page.clock.runFor(4000);
+  await expect(phrase).toHaveText('лучший разработчик Сбера 2023');
+  await page.clock.runFor(4000);
+  await expect(phrase).toHaveText('Умею в фронт, бэк и devops');
+  await page.clock.runFor(4000);
   await expect(phrase).toHaveText('люблю вайбкодить');
   await previous.click();
   await expect(phrase).toHaveText('Умею в фронт, бэк и devops');
@@ -100,6 +122,60 @@ test('новая фраза, её соседи и автоматический �
   await expect(phrase).toHaveText('люблю вайбкодить');
   await expect(next).toBeFocused();
 });
+test('наведение и фокус останавливают таймер и запускают новый интервал', async ({
+  page,
+}) => {
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  await page.clock.install();
+  await page.goto('/');
+  await page.clock.pauseAt(new Date(Date.now() + 1000));
+  const phrase = page.locator('.phrase');
+  const previous = page.getByRole('button', { name: 'Предыдущая фраза' });
+  await page.locator('.switcher').hover();
+  await page.clock.runFor(40000);
+  await expect(phrase).toHaveText('Сделал этот сайт за выходные');
+  await previous.focus();
+  await page.mouse.move(0, 0);
+  await page.clock.runFor(40000);
+  await expect(phrase).toHaveText('Сделал этот сайт за выходные');
+  await page.locator('h1').click();
+  await page.clock.runFor(3999);
+  await expect(phrase).toHaveText('Сделал этот сайт за выходные');
+  await page.clock.runFor(1);
+  await expect(phrase).toHaveText('лучший разработчик Сбера 2023');
+});
+
+test('скрытая вкладка останавливает автосмену', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  await page.clock.install();
+  await page.goto('/');
+  await page.clock.pauseAt(new Date(Date.now() + 1000));
+  // Эмулируем сигнал видимости документа без зависимости от окон CI.
+  await page.evaluate(() => {
+    Object.defineProperty(document, 'hidden', {
+      configurable: true,
+      get: () => true,
+    });
+    document.dispatchEvent(new Event('visibilitychange'));
+  });
+  await page.clock.runFor(40000);
+  await expect(page.locator('.phrase')).toHaveText(
+    'Сделал этот сайт за выходные',
+  );
+  await page.evaluate(() => {
+    Reflect.deleteProperty(document, 'hidden');
+    document.dispatchEvent(new Event('visibilitychange'));
+  });
+  await page.clock.runFor(3999);
+  await expect(page.locator('.phrase')).toHaveText(
+    'Сделал этот сайт за выходные',
+  );
+  await page.clock.runFor(1);
+  await expect(page.locator('.phrase')).toHaveText(
+    'лучший разработчик Сбера 2023',
+  );
+});
+
 test('сокращение движения и адаптивность', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.clock.install();
@@ -107,6 +183,13 @@ test('сокращение движения и адаптивность', async 
   await page.clock.fastForward(45000);
   await expect(page.locator('.phrase')).toHaveText(
     'Сделал этот сайт за выходные',
+  );
+  await page.getByRole('button', { name: 'Следующая фраза' }).click();
+  await page.mouse.move(0, 0);
+  await page.locator('h1').click();
+  await page.clock.runFor(45000);
+  await expect(page.locator('.phrase')).toHaveText(
+    'лучший разработчик Сбера 2023',
   );
   for (const width of [360, 768, 1440]) {
     await page.setViewportSize({ width, height: 1000 });

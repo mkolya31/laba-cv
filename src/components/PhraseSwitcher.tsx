@@ -24,7 +24,7 @@ const PhraseSwitcher = () => {
   }, []);
   useEffect(() => {
     if (hovered || focused || reduced || !visible) return;
-    let delay = 6000;
+    let delay = 4000;
     if (lastManual.current !== null)
       delay = Math.max(0, 30000 - (Date.now() - lastManual.current));
     const timer = window.setTimeout(() => {
