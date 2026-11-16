@@ -13,7 +13,7 @@ test('кейсы перед резюме, действующие контакт�
   page,
 }) => {
   await page.goto('/');
-  await expect(page.locator('#cases article h3')).toHaveText([
+  await expect(page.locator('#cases .project-case h3')).toHaveText([
     'Асинхронная работа AI-агента «Белла»',
     'Из бумажных тетрадей — в mini-CRM',
     'Один подпроцесс для сотен команд',
@@ -51,6 +51,7 @@ test('Bell.ai: масштаб, личный вклад и развитие ко�
     '03',
     '04',
     '05',
+    '06',
   ]);
   await expect(page.locator('.section-heading')).toContainText('Пять историй');
   await expect(card.locator('.metric')).toHaveText('480 тыс.запросов в месяц');
@@ -254,7 +255,7 @@ test('чтение без JavaScript', async ({ browser }) => {
   const page = await context.newPage();
   await page.goto('/');
   await expect(page.locator('h1')).toContainText('Коляченко');
-  await expect(page.locator('#cases article h3')).toHaveText([
+  await expect(page.locator('#cases .project-case h3')).toHaveText([
     'Асинхронная работа AI-агента «Белла»',
     'Из бумажных тетрадей — в mini-CRM',
     'Один подпроцесс для сотен команд',
@@ -264,6 +265,11 @@ test('чтение без JavaScript', async ({ browser }) => {
   await expect(
     page.getByText('Для открытия резюме и контактов включите JavaScript.'),
   ).toBeVisible();
+  await expect(page.locator('.facts-list li')).toHaveCount(4);
+  await expect(page.locator('.podcast-list a')).toHaveCount(2);
+  await page.getByRole('link', { name: 'Перейти к резюме ↓' }).click();
+  await expect(page).toHaveURL(/#contact$/);
+  await expect(page.locator('#contact-title')).toBeInViewport();
   await context.close();
 });
 
@@ -312,4 +318,137 @@ test('текст 200% на узком экране', async ({ page }) => {
     ),
   ).toBe(true);
   await expect(page.getByRole('link', { name: 'Позвонить мне' })).toBeVisible();
+  expect(
+    await page
+      .locator('.skip')
+      .evaluate((element) => element.getBoundingClientRect().bottom),
+  ).toBeLessThanOrEqual(0);
+  const facts = page.locator('.facts-card');
+  await expect(facts).toContainText('За пределами кода');
+  for (const item of await facts.locator('li, .facts-resume').all()) {
+    expect(
+      await item.evaluate(
+        (element) => element.scrollWidth <= element.clientWidth,
+      ),
+    ).toBe(true);
+  }
+});
+
+test('факты и подкасты завершают пять кейсов', async ({ page }) => {
+  await page.goto('/');
+  await expect(page.locator('#cases article')).toHaveCount(6);
+  const card = page.getByRole('article', { name: 'За пределами кода' });
+  await expect(page.locator('#cases article').last()).toBeVisible();
+  await expect(card.locator('.facts-list li')).toHaveText([
+    'Победитель конкурса «Лучший по профессии» в 2023 году в номинации «Лучшая команда разработки»',
+    'Прошёл курс Сбера «Школа scrum-мастеров level 2»',
+    'Учился публичным выступлениям в МГИМО',
+    'Вёл демо. Провёл одну встречу лидеров, одно награждение с Германом Грефом и одну прямую линию с руководителем блока «Сеть продаж»',
+  ]);
+  const episodes = [
+    [
+      'Путь фронтендера: от стажера до ведущего разработчика',
+      'https://www.youtube.com/watch?v=ulZbnlNT5OE',
+    ],
+    [
+      'Как публичные выступления помогают строить карьеру',
+      'https://vkvideo.ru/video-163984940_456240558',
+    ],
+  ];
+  for (const [title, href] of episodes) {
+    const link = card.getByRole('link', { name: title });
+    await expect(link).toHaveAttribute('href', href);
+    await expect(link).toHaveAttribute('target', '_blank');
+    await expect(link).toHaveAttribute('rel', 'noopener noreferrer');
+  }
+  await expect(card.locator('iframe, video')).toHaveCount(0);
+  for (const width of [360, 768, 1440]) {
+    await page.setViewportSize({ width, height: 1000 });
+    const unity = await page.locator('.case-unity').boundingBox();
+    const facts = await card.boundingBox();
+    expect(unity).not.toBeNull();
+    expect(facts).not.toBeNull();
+    if (width === 360) {
+      expect(facts!.y).toBeGreaterThanOrEqual(unity!.y + unity!.height);
+    } else {
+      expect(facts!.y).toBeCloseTo(unity!.y, 0);
+      expect(facts!.x).toBeGreaterThan(unity!.x);
+    }
+    expect(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth <= innerWidth,
+      ),
+    ).toBe(true);
+    for (const item of await card.locator('li, .facts-resume').all()) {
+      expect(
+        await item.evaluate(
+          (element) => element.scrollWidth <= element.clientWidth,
+        ),
+      ).toBe(true);
+    }
+  }
+});
+
+for (const state of ['ready', 'loading', 'error'] as const) {
+  test(`переход к резюме: ${state}`, async ({ page, context }) => {
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    if (state === 'loading') {
+      await page.route('**/runtime-config.json', () => {});
+    } else if (state === 'error') {
+      await page.route('**/runtime-config.json', (route) =>
+        route.fulfill({ status: 503 }),
+      );
+    }
+    await page.goto('/');
+    if (state === 'ready') {
+      await expect(
+        page.getByRole('link', { name: 'моё резюме' }),
+      ).toBeVisible();
+    } else {
+      await expect(page.getByRole('status')).toContainText(
+        state === 'loading' ? 'Загружаю' : 'временно недоступны',
+      );
+    }
+    const link = page.getByRole('link', { name: 'Перейти к резюме ↓' });
+    await expect(link).toHaveAttribute('href', '#contact');
+    await link.click();
+    await expect(page).toHaveURL(/#contact$/);
+    await expect(page.locator('#contact-title')).toBeInViewport();
+    expect(context.pages()).toHaveLength(1);
+  });
+}
+
+test('подкасты и резюме доступны с клавиатуры', async ({ page, context }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await context.route(/https:\/\/(www\.youtube\.com|vkvideo\.ru)\//, (route) =>
+    route.fulfill({ contentType: 'text/html', body: '<title>Podcast</title>' }),
+  );
+  await page.goto('/');
+  await page.getByRole('link', { name: 'Посмотреть SberUnity' }).focus();
+  const links = page.locator('.facts-card a');
+  for (let i = 0; i < 3; i++) {
+    await page.keyboard.press('Tab');
+    const link = links.nth(i);
+    await expect(link).toBeFocused();
+    expect(
+      await link.evaluate((element) => getComputedStyle(element).outlineStyle),
+    ).not.toBe('none');
+    if (i < 2) {
+      const popupPromise = page.waitForEvent('popup');
+      await page.keyboard.press('Enter');
+      const popup = await popupPromise;
+      await popup.waitForLoadState();
+      expect(popup.url()).toBe(await link.getAttribute('href'));
+      await popup.close();
+    } else {
+      await page.keyboard.press('Enter');
+      await expect(page).toHaveURL(/#contact$/);
+      await expect(page.locator('#contact-title')).toBeInViewport();
+      expect(
+        await page
+          .locator('html')
+          .evaluate((element) => getComputedStyle(element).scrollBehavior),
+      ).toBe('auto');
+    }
+  }
 });
