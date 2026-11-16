@@ -13,7 +13,13 @@ test('кейсы перед резюме, действующие контакт�
   page,
 }) => {
   await page.goto('/');
-  await expect(page.locator('article')).toHaveCount(4);
+  await expect(page.locator('#cases article h3')).toHaveText([
+    'Асинхронная работа AI-агента «Белла»',
+    'Из бумажных тетрадей — в mini-CRM',
+    'Один подпроцесс для сотен команд',
+    'Подготовка фронтенда к релизу',
+    'От идеи до прототипа SberUnity',
+  ]);
   const resume = page.getByRole('link', { name: 'моё резюме' });
   await expect(resume).toHaveAttribute('href', '/resume.pdf');
   await expect(resume).toHaveAttribute('target', '_blank');
@@ -34,6 +40,37 @@ test('кейсы перед резюме, действующие контакт�
       ),
   ).toBe(true);
 });
+test('Bell.ai: масштаб, личный вклад и развитие коллегами', async ({
+  page,
+}) => {
+  await page.goto('/');
+  const card = page.locator('#cases article').first();
+  await expect(page.locator('.case-top > span:last-child')).toHaveText([
+    '01',
+    '02',
+    '03',
+    '04',
+    '05',
+  ]);
+  await expect(page.locator('.section-heading')).toContainText('Пять историй');
+  await expect(card.locator('.metric')).toHaveText('480 тыс.запросов в месяц');
+  await expect(card).toContainText('до 30 секунд');
+  await expect(card).toContainText(
+    'HTTPS-запрос ожидал окончательный результат',
+  );
+  await expect(card).toContainText('полностью реализовал backend на Java');
+  await expect(card).toContainText('frontend разработал совместно с коллегой');
+  await expect(card).toContainText(
+    'Промежуточные статусы стали поступать через WebSocket',
+  );
+  await expect(card).toContainText(
+    'после перезагрузки страницы можно было восстановить ожидание ответа',
+  );
+  await expect(card.locator('.result')).toHaveText(
+    'Через реализованный мной асинхронный режим проходят 480 тысяч запросов сотрудников в месяц. Моя архитектура также стала основой для мультичатов, которые позднее реализовали коллеги. На базе написанных мной классов они распараллелили внутренние шаги агента и сократили время маршрутизации с 10 до 2 секунд.',
+  );
+});
+
 test('внешний PDF и ошибка конфигурации', async ({ page }) => {
   await page.route('**/runtime-config.json', (route) =>
     route.fulfill({
@@ -217,7 +254,13 @@ test('чтение без JavaScript', async ({ browser }) => {
   const page = await context.newPage();
   await page.goto('/');
   await expect(page.locator('h1')).toContainText('Коляченко');
-  await expect(page.locator('article')).toHaveCount(4);
+  await expect(page.locator('#cases article h3')).toHaveText([
+    'Асинхронная работа AI-агента «Белла»',
+    'Из бумажных тетрадей — в mini-CRM',
+    'Один подпроцесс для сотен команд',
+    'Подготовка фронтенда к релизу',
+    'От идеи до прототипа SberUnity',
+  ]);
   await expect(
     page.getByText('Для открытия резюме и контактов включите JavaScript.'),
   ).toBeVisible();
