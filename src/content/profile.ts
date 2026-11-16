@@ -2,6 +2,7 @@ export const sourceUrl = 'https://github.com/mkolya31/laba-cv';
 export const phrases = [
   'Сделал этот сайт за выходные',
   'лучший разработчик Сбера 2023',
+  'Умею в фронт, бэк и devops',
   'люблю вайбкодить',
   'круто презентую идеи',
   'хочу работать в R&D',

@@ -61,14 +61,44 @@ test('таймер, ручное переключение, задержка и �
   await expect(phrase).toHaveText('лучший разработчик Сбера 2023');
   await page.getByRole('button', { name: 'Следующая фраза' }).click();
   await page.clock.fastForward(40000);
-  await expect(phrase).toHaveText('люблю вайбкодить');
+  await expect(phrase).toHaveText('Умею в фронт, бэк и devops');
   await page.getByRole('button', { name: 'Следующая фраза' }).click();
   await page.mouse.move(0, 0);
   await page.locator('h1').click();
   await page.clock.fastForward(29000);
-  await expect(phrase).toHaveText('круто презентую идеи');
+  await expect(phrase).toHaveText('люблю вайбкодить');
   await page.clock.fastForward(1000);
+  await expect(phrase).toHaveText('круто презентую идеи');
+  await page.clock.fastForward(6000);
   await expect(phrase).toHaveText('хочу работать в R&D');
+  await page.clock.fastForward(6000);
+  await expect(phrase).toHaveText('Сделал этот сайт за выходные');
+});
+
+test('новая фраза, её соседи и автоматический переход', async ({ page }) => {
+  await page.clock.install();
+  await page.goto('/');
+  const phrase = page.locator('.phrase');
+  const next = page.getByRole('button', { name: 'Следующая фраза' });
+  const previous = page.getByRole('button', { name: 'Предыдущая фраза' });
+  await page.clock.runFor(6500);
+  await expect(phrase).toHaveText('лучший разработчик Сбера 2023');
+  await page.clock.runFor(6500);
+  await expect(phrase).toHaveText('Умею в фронт, бэк и devops');
+  await expect(page.locator('.dots > span')).toHaveCount(6);
+  await expect(page.locator('.dots > span').nth(2)).toHaveClass('active');
+  await page.clock.runFor(6500);
+  await expect(phrase).toHaveText('люблю вайбкодить');
+  await previous.click();
+  await expect(phrase).toHaveText('Умею в фронт, бэк и devops');
+  await previous.click();
+  await expect(phrase).toHaveText('лучший разработчик Сбера 2023');
+  await expect(previous).toBeFocused();
+  await next.click();
+  await expect(phrase).toHaveText('Умею в фронт, бэк и devops');
+  await next.click();
+  await expect(phrase).toHaveText('люблю вайбкодить');
+  await expect(next).toBeFocused();
 });
 test('сокращение движения и адаптивность', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
@@ -80,7 +110,7 @@ test('сокращение движения и адаптивность', async 
   );
   for (const width of [360, 768, 1440]) {
     await page.setViewportSize({ width, height: 1000 });
-    for (let i = 0; i < 5; i++) {
+    for (let i = 0; i < 6; i++) {
       const top = await page
         .locator('#cases')
         .evaluate((e) => e.getBoundingClientRect().top + scrollY);
@@ -132,8 +162,15 @@ test('клавиатурное управление сохраняет фоку�
 });
 
 test('текст 200% на узком экране', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.setViewportSize({ width: 360, height: 900 });
   await page.goto('/');
+  for (let i = 0; i < 2; i++) {
+    await page.getByRole('button', { name: 'Следующая фраза' }).click();
+  }
+  await expect(page.locator('.phrase')).toHaveText(
+    'Умею в фронт, бэк и devops',
+  );
   await page.evaluate(() => {
     const elements = [...document.querySelectorAll<HTMLElement>('body *')];
     const sizes = elements.map((element) =>
