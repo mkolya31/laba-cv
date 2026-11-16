@@ -45,7 +45,7 @@ const Home = () => (
             Проектирую, разрабатываю, внедряю.
           </p>
           <a className="text-link" href="#cases">
-            Посмотреть, что я сделал <span>↓</span>
+            Посмотреть доказательства <span>↓</span>
           </a>
         </div>
       </section>
