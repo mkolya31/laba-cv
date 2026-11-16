@@ -391,13 +391,15 @@ em {
 .skip {
   position: fixed;
   left: 20px;
-  top: -80px;
+  top: 0;
+  transform: translateY(-100%);
   z-index: 10;
   background: var(--bg);
   padding: 16px;
 }
 .skip:focus {
   top: 10px;
+  transform: none;
 }
 .sr-only {
   position: absolute;
@@ -613,4 +615,59 @@ h3,
   align-items: center;
   justify-content: center;
   gap: 10px;
+}
+
+.facts-card {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.facts-card h3 {
+  min-height: 0;
+}
+.facts-list {
+  padding-left: 20px;
+  margin: 0 0 28px;
+  color: #c7c3bd;
+  font-size: 14px;
+}
+.facts-list li + li {
+  margin-top: 12px;
+}
+.facts-list li::marker {
+  color: var(--accent);
+}
+.podcasts {
+  border-top: 1px solid var(--line);
+  padding-top: 20px;
+  margin-bottom: 28px;
+}
+.podcasts h4 {
+  margin: 0 0 16px;
+  font-size: 14px;
+  color: var(--accent);
+}
+.podcast-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-size: 14px;
+}
+.podcast-list li + li {
+  margin-top: 16px;
+}
+.podcast-list a {
+  text-underline-offset: 3px;
+}
+.podcast-list a:hover {
+  color: var(--accent);
+}
+.podcast-list span {
+  color: var(--accent);
+}
+.facts-resume {
+  align-self: flex-start;
+  margin-top: auto;
+  max-width: 100%;
 }

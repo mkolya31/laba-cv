@@ -1,5 +1,6 @@
 import PhraseSwitcher from '../components/PhraseSwitcher';
 import ContactSection from '../components/ContactSection';
+import InterestingFactsCard from '../components/InterestingFactsCard';
 import { cases, sourceUrl } from '../content/profile';
 
 const Home = () => (
@@ -69,7 +70,10 @@ const Home = () => (
         </div>
         <div className="case-grid">
           {cases.map((item) => (
-            <article className={`case case-${item.id}`} key={item.id}>
+            <article
+              className={`case project-case case-${item.id}`}
+              key={item.id}
+            >
               <div className="case-top">
                 <span>{item.label}</span>
                 <span>{item.number}</span>
@@ -94,6 +98,7 @@ const Home = () => (
               )}
             </article>
           ))}
+          <InterestingFactsCard />
         </div>
       </section>
       <ContactSection />
