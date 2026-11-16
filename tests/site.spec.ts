@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures';
 const fixture = {
   phone: '+15555550123',
   telegramUrl: 'https://t.me/example_user',
@@ -251,6 +251,7 @@ test('сокращение движения и адаптивность', async 
 
 test('чтение без JavaScript', async ({ browser }) => {
   const context = await browser.newContext({ javaScriptEnabled: false });
+  await context.route('https://mc.yandex.ru/**', (route) => route.abort());
   const page = await context.newPage();
   await page.goto('/');
   await expect(page.locator('h1')).toContainText('Коляченко');

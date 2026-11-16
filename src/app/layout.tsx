@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import './globals.css';
+import YandexMetrika from '../components/YandexMetrika';
 export const metadata: Metadata = {
   title: 'Максим Коляченко — Fullstack-разработчик',
   description:
@@ -13,7 +14,10 @@ export const metadata: Metadata = {
 };
 const Layout = ({ children }: Readonly<{ children: React.ReactNode }>) => (
   <html lang="ru">
-    <body>{children}</body>
+    <body>
+      <YandexMetrika />
+      {children}
+    </body>
   </html>
 );
 export default Layout;
